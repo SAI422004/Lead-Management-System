@@ -1,0 +1,30 @@
+version: "3.9"
+
+# Development overrides — run with:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  backend:
+    build:
+      target: builder          # Use builder stage (has devDependencies)
+    volumes:
+      - ./backend:/app         # Mount source for hot-reload
+      - /app/node_modules      # Prevent host node_modules from overwriting container's
+    environment:
+      NODE_ENV: development
+    command: npx nodemon index.js
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      REACT_APP_API_URL: http://localhost:5000
+      CHOKIDAR_USEPOLLING: "true"   # Hot-reload inside Docker on Windows/macOS
+    command: npm start
+    ports:
+      - "3000:3000"            # Override nginx port; CRA dev server runs on 3000
