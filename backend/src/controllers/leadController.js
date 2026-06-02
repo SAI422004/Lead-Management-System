@@ -92,3 +92,10 @@ exports.deleteLead = async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 };
+
+// Aliases used by route files
+exports.list = exports.getLeads;
+exports.getOne = exports.getLeadById;
+exports.create = exports.createLead;
+exports.update = exports.updateLead;
+exports.remove = exports.deleteLead;

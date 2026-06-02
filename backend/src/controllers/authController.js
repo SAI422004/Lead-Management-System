@@ -48,3 +48,36 @@ exports.login = async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.refresh = async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ message: 'Token is required' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    const result = await db.query('SELECT * FROM users WHERE id = $1', [decoded.id]);
+    if (result.rows.length === 0) return res.status(401).json({ message: 'User not found' });
+    const user = result.rows[0];
+    if (!user.is_active) return res.status(403).json({ message: 'Account inactive' });
+    return res.status(200).json({ token: signToken(user) });
+  } catch (err) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
+exports.logout = async (req, res) => {
+  // Stateless JWT — client simply discards the token
+  return res.status(200).json({ message: 'Logged out successfully' });
+};
+
+exports.me = async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, name, email, role, is_active, created_at FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'User not found' });
+    return res.status(200).json({ user: result.rows[0] });
+  } catch (err) {
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
